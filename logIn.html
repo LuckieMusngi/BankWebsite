@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script>
+            var crypto = require('crypto')
+            function getTransactions(){
+                var routingNum = document.getElementById('rNum').value
+                var routingHash = crypto.createHash('sha256')
+                routingHash.update(routingNum)
+                let userData = {'routingNumber' : routingNum}
+                fetch('http://localhost8080/login', {method: 'POST', body: JSON.stringify(userData)})
+                .then(response=>{
+                    if(response.ok){
+                        let url = window.location.href + './accepted'
+                        window.location.href = url
+                    }
+                    else{
+                        document.getElementById('error').style['visibility'] = visible
+                    }
+                })
+            }
+        </script>
+        <style>
+            .error{
+                color: red;
+                visibility:hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <form id = 'login'>
+            Routing Number: <input type = 'text' name = 'rNum' id = 'rNum'><br><br>
+            <button type = 'button'>Submit</button>
+        </form>
+        <h3 id = 'error'>Routing Number Not Found</h3>
+    </body>
+</html>

@@ -2,20 +2,21 @@
 <html>
     <head>
         <script>
-            var crypto = require('crypto')
-            function getTransactions(){
-                var routingNum = document.getElementById('rNum').value
-                var routingHash = crypto.createHash('sha256')
-                routingHash.update(routingNum)
-                let userData = {'routingNumber' : routingNum}
-                fetch('http://localhost8080/login', {method: 'POST', body: JSON.stringify(userData)})
+            function checkPassword(){
+                var pass = document.getElementById('password').value
+                var user = document.getElementById('username').value 
+                let userData = {Username: user, Password: pass}
+                fetch('http://localhost:8080/login', {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                })
                 .then(response=>{
                     if(response.ok){
-                        let url = window.location.href + './accepted'
-                        window.location.href = url
+                        window.location.href = '/accepted'
                     }
                     else{
-                        document.getElementById('error').style['visibility'] = visible
+                        document.getElementById('error').style['visibility'] = 'visible'
                     }
                 })
             }
@@ -29,9 +30,11 @@
     </head>
     <body>
         <form id = 'login'>
-            Routing Number: <input type = 'text' name = 'rNum' id = 'rNum'><br><br>
-            <button type = 'button'>Submit</button>
+            Username: <input type = 'text' name = 'username' id = 'username'><br><br>
+            Password: <input type = 'password' name = 'password' id = 'password'><br><br>
+            <button type = 'button' onclick = 'checkPassword()'>Submit</button>
         </form>
-        <h3 id = 'error'>Routing Number Not Found</h3>
+        <a href = 'http://localhost:8080/signup'>Create an account</a>
+        <h3 id = 'error'>Invalid username/password.</h3>
     </body>
 </html>

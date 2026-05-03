@@ -1,0 +1,64 @@
+[{
+  "_id": {
+    "$oid": "69f2e6b83a2d9f35d6c6fabd"
+  },
+  "users": [
+    {
+      "Name": "Luckie Musngi",
+      "Username": "luckie1",
+      "Password": "Password1",
+      "Accounts": [
+        111111111,
+        222222222,
+        333333333
+      ]
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69f2e6c13a2d9f35d6c6fabe"
+  },
+  "Accounts": [
+    {
+      "Account #": 111111111,
+      "Account Type": "Checking",
+      "Balance": 232.4
+    },
+    {
+      "Account #": 222222222,
+      "Account Type": "Savings",
+      "Balance": 5400.75
+    },
+    {
+      "Account #": 333333333,
+      "Account Type": "Credit",
+      "Balance": -186.92
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69f2e6ca3a2d9f35d6c6fabf"
+  },
+  "Transactions": [
+    {
+      "Account #": 111111111,
+      "Balance": -23.47,
+      "Type": "Food",
+      "Recipiant/Sender": "Fry's Grocery"
+    },
+    {
+      "Account #": 222222222,
+      "Balance": 250,
+      "Type": "Deposit",
+      "Recipiant/Sender": "Employer Payroll"
+    },
+    {
+      "Account #": 333333333,
+      "Balance": -48.21,
+      "Type": "Gas",
+      "Recipiant/Sender": "Shell"
+    }
+  ]
+}]

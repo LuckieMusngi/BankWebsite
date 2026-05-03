@@ -22,7 +22,6 @@ app.get('/', (req, res)=>{
 app.post('/login', async (req, res)=>{
     const {Username, Password} = req.body
     try{
-        // Fix 4: Added 'await'
         const userData = await bankData.findOne({
             "users":{
                 $elemMatch: {"Username": Username, "Password":Password}

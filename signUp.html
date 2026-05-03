@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script>
+            function addInputs(){
+                var signUp = document.getElementById('signUp')
+                var inputNum  = Number(document.getElementById('amount').value)
+                if(isNaN(inputNum)){
+                    document.getElementById('numError').style['display']='block'
+                }
+                else if(inputNum > 5){
+                    var p = document.createElement('p')
+                    p.innerText = 'The maximum amount of accounts we can start with is 5.'
+                    signUp.appendChild(p)
+                }
+                else{
+                    var form = document.getElementById('accounts')
+                    form.innerHTML = ''
+                    for(let i = 0; i<inputNum; i++){
+                        var label = document.createElement('label')
+                        label.innerText = 'Account Number:  '
+                        form.appendChild(label)
+                        var input = document.createElement("input")
+                        input.type = 'text'
+                        input.name = 'accounts'
+                        form.appendChild(input)
+                        form.appendChild(document.createElement('br'))
+                        form.appendChild(document.createElement('br'))
+                    }
+                    let button = document.createElement('button')
+                    button.type = 'button'
+                    button.innerText = 'Submit'
+                    button.onclick = submitForms
+                    form.appendChild(button)
+                }
+            }
+
+            function checkPassword(){
+                document.getElementById('matchingError').style['display'] = 'none'
+                document.getElementById('passwordError').style['display'] = 'none'
+                const charString = "!@#$%^&*()_+-=[]{};:'\"\\|,.<>/?~`";
+                const specialChars = charString.split('');
+                var passwords = document.getElementsByName('password')
+                const myRegex = new RegExp('[^a-zA-Z0-9]');
+                if(!(passwords[0].value == passwords[1].value)){
+                    document.getElementById('matchingError').style['display'] = 'block'
+                    return
+                }
+                if (passwords[0].value.length < 8 || /[^a-zA-Z0-9]/.test(passwords[0].value)){
+                    document.getElementById('passwordError').style['display'] = 'block'
+                    return
+                }
+                else{
+                    addInputs()
+                }
+            }
+
+            function submitForms(){
+                var pass = document.getElementsByName('password')[0].value
+                var user = document.getElementById('username').value
+                var accs = [];
+                var accInputs = document.getElementsByName('accounts')
+                for (let i = 0;i<accInputs.length; i++){
+                    accs.push(accInputs[i].value)
+                }
+                let userData = {Username: user, Password: pass, Accounts: accs}
+                fetch(window.location.href, {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                })
+            }
+        </script>
+        <style>
+           .error{
+            color: red;
+            display:none;
+           } 
+           #amount{
+            margin: 5px;
+            width: 15px;
+           }
+        </style>
+    </head>
+    <body>
+        <form id = 'signUp'>
+            Username:<br><input type = 'text' name = 'username' id = 'username'><br><br>
+            Password: <br><input type = 'password' name = 'password'>
+            <ul class = 'error' id = 'passwordError'>
+                <li>Must be at least 8 characters long.</li>
+                <li>There must be no special characters.</li>
+            </ul>
+            Confirm Password: <br><input type = 'password' name = 'password'><br><br>
+            <p class = 'error' id = 'matchingError'>Passwords must match.</p>
+            How many accounts would you like to add?
+            <input type = 'text' name = 'amount' id = 'amount'><br>
+            <p class = 'error' id = 'numError'>Please input a whole number.</p>
+            <button type = 'button' onclick = 'checkPassword()'>Enter</button>
+        </form>
+        <form id = 'accounts'></form>
+    </body>
+</html>

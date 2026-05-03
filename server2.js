@@ -1,13 +1,12 @@
 var express = require('express')
 var app = express()
-var url = require('url')
 var path = require('path')
-var {MongoClient} = require('mongodb')
+var { MongoClient, ObjectId } = require('mongodb') 
 
 const uri = 'mongodb://localhost:27017/'
 const client = new MongoClient(uri)
 
-app.use(express.json)
+app.use(express.json()) 
 
 client.connect()
 .then(()=>{console.log('Connected to MongoDB')})
@@ -23,7 +22,8 @@ app.get('/', (req, res)=>{
 app.post('/login', async (req, res)=>{
     const {Username, Password} = req.body
     try{
-        const userData = bankData.findOne({
+        // Fix 4: Added 'await'
+        const userData = await bankData.findOne({
             "users":{
                 $elemMatch: {"Username": Username, "Password":Password}
             }
@@ -40,8 +40,39 @@ app.post('/login', async (req, res)=>{
     }
 })
 
-app.get('/accounts',(req, res)=>{
-    res.send(path.join(__dirname, 'accounts.html'))
+app.get('/signup', (req, res)=>{
+    res.sendFile(path.join(__dirname, 'signUp.html')) 
 })
 
-app.listen(8080, ()=>{console.log('Server running.')})
+app.post('/signup', async (req, res)=>{
+    const {Username, Password, Accounts} = req.body;
+    try{
+        const result = await bankData.updateOne(
+            { _id: new ObjectId("69f2e6b83a2d9f35d6c6fabd") },
+            { 
+                $push: { 
+                    users: { 
+                        Username: Username, 
+                        Password: Password, 
+                        Accounts: Accounts 
+                    } 
+                } 
+            }
+        )
+        if (result.modifiedCount === 1) {
+            res.status(201).send("User registered successfully");
+        } else {
+            res.status(400).send("Failed to register user");
+        }
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+    }
+})
+
+app.get('/accounts',(req, res)=>{
+    res.sendFile(path.join(__dirname, 'accounts.html'))
+})
+
+app.listen(8080, ()=>{console.log('Server running on http://localhost:8080')})

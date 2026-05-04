@@ -4,13 +4,10 @@
   },
   "users": [
     {
-      "Name": "Luckie Musngi",
       "Username": "luckie1",
       "Password": "Password1",
       "Accounts": [
-        111111111,
-        222222222,
-        333333333
+        12345678
       ]
     }
   ]
@@ -21,19 +18,9 @@
   },
   "Accounts": [
     {
-      "Account #": 111111111,
+      "Account #": 12345678,
       "Account Type": "Checking",
       "Balance": 232.4
-    },
-    {
-      "Account #": 222222222,
-      "Account Type": "Savings",
-      "Balance": 5400.75
-    },
-    {
-      "Account #": 333333333,
-      "Account Type": "Credit",
-      "Balance": -186.92
     }
   ]
 },
@@ -43,22 +30,10 @@
   },
   "Transactions": [
     {
-      "Account #": 111111111,
+      "Account #": 12345678,
       "Balance": -23.47,
       "Type": "Food",
       "Recipiant/Sender": "Fry's Grocery"
-    },
-    {
-      "Account #": 222222222,
-      "Balance": 250,
-      "Type": "Deposit",
-      "Recipiant/Sender": "Employer Payroll"
-    },
-    {
-      "Account #": 333333333,
-      "Balance": -48.21,
-      "Type": "Gas",
-      "Recipiant/Sender": "Shell"
     }
   ]
 }]

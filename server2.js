@@ -1,7 +1,9 @@
 var express = require('express')
 var app = express()
 var path = require('path')
+var url = require('url')
 var { MongoClient, ObjectId } = require('mongodb') 
+var fs = require('fs')
 
 const uri = 'mongodb://localhost:27017/'
 const client = new MongoClient(uri)
@@ -71,6 +73,26 @@ app.post('/signup', async (req, res)=>{
 })
 
 app.get('/accounts',(req, res)=>{
+    var user = url.parse(req.url).query.user
+    const accountDoc = await bankData.findOne({ "Accounts": { $exists: true } })
+    var accounts = accountDoc.Accounts
+    var userAccounts = []
+    var accountItems = ''
+    for(let i = 0; i<accounts.length;i++){
+        if(accounts[i].username == user){
+            userAccounts.push(accounts[i])
+            accountItems += `<li class="account-card">
+            <div>Account Number: ${accounts[i]['Account #']}</div>
+            <div>Account Type: ${accounts[i]['Account Type']}</div> 1
+            <div>Balance: $${Number(accounts[i].Balance).toFixed(2)}</div>
+            </li>`;
+        }
+    }
+
+    var accoutsHTML = fs.readFileSync('accounts.html', 'utf8')
+    .replace('__USERNAME__', user)
+    .replace('__STATUS__', userAccounts.length + ' account(s).')
+    .replace('__ACCOUNT_LIST__', accountItems);
     res.sendFile(path.join(__dirname, 'accounts.html'))
 })
 

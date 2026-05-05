@@ -20,19 +20,12 @@
     }
 
     h1 {
-      color: #D3DAD9;
       font-weight: bold;
       margin-bottom: 8px;
     }
 
-    .status {
-      color: #D3DAD9;
-    }
-
     .account-list {
       list-style: none;
-      padding: 0;
-      margin: 0;
       display: grid;
       gap: 14px;
     }
@@ -42,26 +35,83 @@
       padding: 16px;
     }
 
-    .account-card strong {
-      color: #D3DAD9;
-    }
-
     main {
       padding: 24px;
       max-width: 40vw;
       margin: 0 auto;
     }
+
+    button {
+      background-color: #1c1c1c;
+      color: #D3DAD9;
+      border: none;
+      padding: 5px 5px;
+    }
   </style>
 </head>
 
 <body>
-  <header>Bank App Project</header>
+  <header>BankWebsite</header>
   <main>
-    <h1>__USERNAME__</h1>
+    <h1 id="username">Loading...</h1>
     <h2>Accounts</h2>
-    <p class="status">__STATUS__</p>
-    <ul class="account-list">__ACCOUNT_LIST__</ul>
+    <p class="status" id="status">Loading...</p>
+    <ul class="account-list" id="account-list"></ul>
   </main>
+
+  <script>
+    // loads the data for above ^
+    function load() {
+      const username = localStorage.getItem('bankUsername')
+      // go back to login
+      if (!username) {
+        window.location.href = 'http://localhost:8080/'
+        return
+      }
+
+      // fetch accounts
+      fetch('http://localhost:8080/get-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Username: username })
+      })
+      .then(response => {
+        if (!response.ok) { // only rly happens if user doesn't exist anymore
+          localStorage.removeItem('bankUsername')
+          window.location.href = 'http://localhost:8080/'
+          return
+        }
+        return response.json() // this is the data for the accounts page (username, account count, accounts)
+      })
+      .then(data => {
+        document.getElementById('username').textContent = data.userName
+        document.getElementById('status').textContent = data.accountCount
+
+        let accountHTML = ''
+        for (let account of data.accounts) {
+          accountHTML += `<li class="account-card">
+            <div>Account Number: ${account['Account #']}</div>
+            <div>Account Type: ${account['Account Type']}</div>
+            <div>Balance: $${Number(account.Balance).toFixed(2)}</div>
+            
+            <form method="POST" action="/delete-account">
+              <input type="hidden" name="Username" value="${username}">
+              <input type="hidden" name="accountNumber" value="${account['Account #']}">
+              <button type="submit" class="delete-account-btn">Delete Account</button>
+            </form>
+          </li>`
+        }
+        document.getElementById('account-list').innerHTML = accountHTML
+      })
+      .catch(err => {
+        console.error(err)
+      })
+    }
+
+    load()
+  </script>
+</body>
+</html>
 </body>
 
 </html>

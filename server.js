@@ -1,114 +1,149 @@
-const express = require("express");
-const mongoose = require("mongoose");
+// Server handles/helps with everything, from backend to page rendering
 
-const app = express();
+//* setup
+// vars
+var express = require('express')
+var app = express()
+var path = require('path')
+var { MongoClient } = require('mongodb') 
+var fs = require('fs')
 
-app.use(express.json());
+// MongoDB and express setup
+const uri = 'mongodb://localhost:27017/'
+const client = new MongoClient(uri)
+app.use(express.json()) 
+app.use(express.urlencoded({ extended: true }))
+app.use(express.static(__dirname))
 
-const transactionRoutes = require("./routes/transactionRoutes");
+client.connect()
+.then(()=>{console.log('Connected to MongoDB')})
+.catch((error)=>console.log('Connection failed'))
 
-app.use("/transactions", transactionRoutes);
+// data stored in db and collections
+const db = client.db('Banking')
 
-mongoose.connect("mongodb://localhost:27017/yourDatabaseName", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+const usersCollection = db.collection('Users')
+const accountsCollection = db.collection('Accounts')
+const transactionsCollection = db.collection('Transactions')
+
+
+//* handling
+
+// handle default, send login page
+app.get('/', (req, res)=>{
+    res.sendFile(path.join(__dirname, 'logIn.html'))
 })
-.then(() => 
-    console.log("MongoDB connected")
-)
-.catch(err => 
-    console.log(err)
-);
 
-const PORT = 8080;
+// handle verify session - restore accounts page from localStorage username
+// handle login, check if user exists and send accounts page file
+app.post('/login', async (req, res)=>{
+    const {Username, Password} = req.body
+    try{
+        const userData = await usersCollection.findOne({
+            Username: Username,
+            Password: Password
+        })
+        if(userData){
+            res.sendFile(path.join(__dirname, 'accounts.html'))
+        }
+        else{
+            res.status(401).send('Invalid User Info')
+        }
+    }
+    catch(err){
+        res.status(500).send('Server Error')
+    }
+})
 
-// read data
-const data = JSON.parse(fs.readFileSync('Users.Banking.json', 'utf8'));
-const users = data.find(d => d.users).users;
-const accounts = data.find(d => d.Accounts).Accounts;
+// handle verify session - send accounts.html file
+app.post('/verify-session', async (req, res)=>{
+    const { Username } = req.body
+    try{
+        const userData = await usersCollection.findOne({ Username: Username })
+        if(userData){
+            res.sendFile(path.join(__dirname, 'accounts.html'))
+        }
+        else{
+            res.status(401).send('Unauthorized')
+        }
+    }
+    catch(err){
+        res.status(500).send('Server Error')
+    }
+})
 
-function renderLoginPage(errorMessage) {
-  return fs.readFileSync('logIn2.html', 'utf8').replace('__LOGIN_ERROR__', errorMessage || '');
-}
+// handle get accounts data, returns the accounts data (account number, type, balance)
+app.post('/get-accounts', async (req, res)=>{
+    const { Username } = req.body
+    try{
+        const userData = await usersCollection.findOne({ Username: Username })
+        if(!userData){
+            return res.status(401).send('Unauthorized')
+        }
+        const userAccounts = await accountsCollection.find({ Username: Username }).toArray()
+        res.json({
+            userName: userData.Name || Username,
+            accountCount: userAccounts.length + ' account(s)',
+            accounts: userAccounts
+        })
+    }
+    catch(err){
+        res.status(500).send('Server Error')
+    }
+})
 
-http.createServer((req, res) => {
-  // parse url (w/ query)
-  const parsed = url.parse(req.url, true);
-  
-  //* login page (default)
-  if (req.method === 'GET' && (parsed.pathname === '/' || parsed.pathname === '/login2')) {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(renderLoginPage(''));
-    return;
-  }
+// handle sign up page (literal just send the page)
+app.get('/signup', (req, res)=>{
+    res.sendFile(path.join(__dirname, 'signUp.html')) 
+})
 
-  //! accounts page (shouldn't work bc no log in, but here anyway)
-  if (req.method === 'GET' && parsed.pathname === '/accounts') {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(fs.readFileSync('accounts.html'));
-    return;
-  }
+// handle sign up, check if username is taken and if not add to db
+app.post('/signup', async (req, res)=>{
+    const {Name, Username, Password} = req.body
+    try{
+        const existingUser = await usersCollection.findOne({ Username: Username });
+        if(existingUser){return res.status(409).send("Username already taken. Please choose another.");}
+        const result = await usersCollection.insertOne({
+            Name: Name || Username,
+            Username: Username,
+            Password: Password
+        })
+        if (result.insertedId) {
+            res.status(201).send("User registered successfully");
+        } else {
+            res.status(400).send("Failed to register user");
+        }
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+    }
+})
 
-  //* checks login post, goes to accounts page if good
-  if (req.method === 'POST' && parsed.pathname === '/login2') {
-    
-    // get data
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    
-    // parse it and check
-    req.on('end', () => {
-      const bodyData = qs.parse(body);
-      
-      // username, password
-      const username = bodyData.username;
-      const password = bodyData.password;
-      
-      // get the user with those credentials (if any)
-      const user = users.find(u => u.Username === username && u.Password === password);
+app.post('/delete-account', async (req, res)=>{
+    const { Username, accountNumber } = req.body
 
-      // bad login !
-      if (!user) {
-        res.writeHead(401, { 'Content-Type': 'text/html' });
-        res.end(renderLoginPage('Invalid username or password.'));
-        return;
-      }
+    try{
+        if(!Username || !accountNumber){
+            return res.status(400).send('Missing account info')
+        }
 
-      // good login, get their accounts !
-      const userAccounts = [];
-      for (const a of accounts) {
-        if (user.Accounts.includes(a['Account #'])) userAccounts.push(a);
-      }
+        await accountsCollection.deleteOne({
+            Username: Username,
+            'Account #': Number(accountNumber)
+        })
 
-      // writehead and send
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(updateAccountsHTML(user, userAccounts));
-    });
-    return;
-  }
+        const userData = await usersCollection.findOne({ Username: Username })
+        if(!userData){
+            return res.status(404).send('User not found')
+        }
 
-  // therefore random url
-  res.writeHead(404);
-  res.end('Not found');
+        res.sendFile(path.join(__dirname, 'accounts.html'))
+    }
+    catch(err){
+        return res.status(500).send('Server Error')
+    }
+})
 
-}).listen(PORT, () => console.log('server running at http://127.0.0.1:' + PORT));
-
-
-//* update accounts.html, replacing placeholders with user info and account info
-function updateAccountsHTML(user, userAccounts) {
-
-  // list of accounts (account number, type, balance)
-  let accountItems = '';
-  for (const curAcc of userAccounts) {
-    accountItems += `<li class="account-card">
-      <div>Account Number: ${curAcc['Account #']}</div>
-      <div>Account Type: ${curAcc['Account Type']}</div>
-      <div>Balance: $${Number(curAcc.Balance).toFixed(2)}</div>
-    </li>`;
-  }
-
-  return fs.readFileSync('accounts.html', 'utf8')
-    .replace('__USERNAME__', user.Name)
-    .replace('__STATUS__', userAccounts.length + ' account(s).')
-    .replace('__ACCOUNT_LIST__', accountItems);
-}
+// start server
+app.listen(8080, ()=>{console.log('Server running on http://localhost:8080')})

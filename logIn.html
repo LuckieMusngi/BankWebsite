@@ -14,11 +14,8 @@
                 })
                 .then(response=>{
                     if(response.ok){
-                        return response.text().then(html => {
-                        document.open();
-                        document.write(html);
-                        document.close();
-                        })
+                        localStorage.setItem('bankUsername', user)
+                        window.location.href = 'http://localhost:8080/accounts.html'
                     }
                     else {
                         document.getElementById('error').style['visibility'] = 'visible';
@@ -27,6 +24,26 @@
             }
         </script>
         <style>
+            body{
+                background-color: #171717;
+                color: #D3DAD9;
+                font-family: Arial, sans-serif;
+            }
+
+            input{
+                background-color: #1c1c1c;
+                color: #D3DAD9;
+            }
+
+            button{
+                background-color: #262626;
+                color: #D3DAD9;            
+            }
+            
+            a{
+                color: #D3DAD9;
+            }
+
             .error{
                 color: red;
                 visibility:hidden;

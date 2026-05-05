@@ -41,7 +41,7 @@ async function addTransaction(userId, type, amount, description) {
 
     // create transaction object
     const transaction = {
-      accountId: account._id, // pulled automatically
+      accountId: account._id, 
       userId: new ObjectId(userId),
       type: type,
       amount: amount,

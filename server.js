@@ -55,23 +55,6 @@ app.post('/login', async (req, res)=>{
     }
 })
 
-// handle verify session - send accounts.html file
-app.post('/verify-session', async (req, res)=>{
-    const { Username } = req.body
-    try{
-        const userData = await usersCollection.findOne({ Username: Username })
-        if(userData){
-            res.sendFile(path.join(__dirname, 'accounts.html'))
-        }
-        else{
-            res.status(401).send('Unauthorized')
-        }
-    }
-    catch(err){
-        res.status(500).send('Server Error')
-    }
-})
-
 // handle get accounts data, returns the accounts data (account number, type, balance)
 app.post('/get-accounts', async (req, res)=>{
     const { Username } = req.body

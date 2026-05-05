@@ -13,7 +13,7 @@
                     body: JSON.stringify(userData)
                 })
                 .then(response=>{
-                    if(response.ok){
+                    if(response.ok){ // ok is if login successful (ie username/password correct)
                         localStorage.setItem('bankUsername', user)
                         window.location.href = 'http://localhost:8080/accounts.html'
                     }

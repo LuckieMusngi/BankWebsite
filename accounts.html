@@ -47,12 +47,19 @@
       border: none;
       padding: 5px 5px;
     }
+
+    .logout-btn {
+      float: right;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
   <header>BankWebsite</header>
   <main>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
     <h1 id="username">Loading...</h1>
     <h2>Accounts</h2>
     <p class="status" id="status">Loading...</p>
@@ -60,6 +67,17 @@
   </main>
 
   <script>
+    function logout() {
+      localStorage.removeItem('bankUsername')
+      localStorage.removeItem('bankAccountNumber')
+      window.location.href = 'http://localhost:8080/'
+    }
+
+    function openTransactions(accountNumber) {
+      localStorage.setItem('bankAccountNumber', accountNumber)
+      window.location.href = 'http://localhost:8080/transactions.html'
+    }
+
     // loads the data for above ^
     function load() {
       const username = localStorage.getItem('bankUsername')
@@ -90,7 +108,7 @@
         let accountHTML = ''
         for (let account of data.accounts) {
           accountHTML += `<li class="account-card">
-            <div>Account Number: ${account['Account #']}</div>
+            <div>Account Number: <a href="#" onclick="openTransactions(${account['Account #']}); return false;">${account['Account #']}</a></div>
             <div>Account Type: ${account['Account Type']}</div>
             <div>Balance: $${Number(account.Balance).toFixed(2)}</div>
             

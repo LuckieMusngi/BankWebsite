@@ -24,13 +24,17 @@ app.get('/', (req, res)=>{
 app.post('/login', async (req, res)=>{
     const {Username, Password} = req.body
     try{
-        const userData = await bankData.findOne({
+        const userData = bankData.findOne({
             "users":{
                 $elemMatch: {"Username": Username, "Password":Password}
             }
         })
         if(userData){
-            res.status(200).send('Success')
+            const accountDoc = await bankData.findOne({ "Accounts": { $exists: true } })
+            console.log(accountDoc)
+            var accounts = accountDoc.Accounts
+            var accountsHTML = accountsPage(Username, accounts)
+            res.send(accountsHTML)
         }
         else{
             res.status(401).send('Invalid User Info')
@@ -46,16 +50,19 @@ app.get('/signup', (req, res)=>{
 })
 
 app.post('/signup', async (req, res)=>{
-    const {Username, Password, Accounts} = req.body;
+    const {Username, Password, Accounts} = req.body
     try{
+        const existingUser = await bankData.findOne({
+            "users.Username": Username
+        });
+        if(existingUser){return res.status(409).send("Username already taken. Please choose another.");}
         const result = await bankData.updateOne(
             { _id: new ObjectId("69f2e6b83a2d9f35d6c6fabd") },
             { 
                 $push: { 
                     users: { 
                         Username: Username, 
-                        Password: Password, 
-                        Accounts: Accounts 
+                        Password: Password
                     } 
                 } 
             }
@@ -72,28 +79,25 @@ app.post('/signup', async (req, res)=>{
     }
 })
 
-app.get('/accounts',(req, res)=>{
-    var user = url.parse(req.url).query.user
-    const accountDoc = await bankData.findOne({ "Accounts": { $exists: true } })
-    var accounts = accountDoc.Accounts
-    var userAccounts = []
+function accountsPage(user, accounts){
+    var userAccounts = []   
     var accountItems = ''
     for(let i = 0; i<accounts.length;i++){
-        if(accounts[i].username == user){
+        if(accounts[i].Username == user){
             userAccounts.push(accounts[i])
             accountItems += `<li class="account-card">
             <div>Account Number: ${accounts[i]['Account #']}</div>
-            <div>Account Type: ${accounts[i]['Account Type']}</div> 1
+            <div>Account Type: ${accounts[i]['Account Type']}</div> 
             <div>Balance: $${Number(accounts[i].Balance).toFixed(2)}</div>
             </li>`;
         }
     }
-
-    var accoutsHTML = fs.readFileSync('accounts.html', 'utf8')
+    return fs.readFileSync('accounts.html', 'utf8')
     .replace('__USERNAME__', user)
     .replace('__STATUS__', userAccounts.length + ' account(s).')
-    .replace('__ACCOUNT_LIST__', accountItems);
-    res.sendFile(path.join(__dirname, 'accounts.html'))
-})
+    .replace('__ACCOUNT_LIST__', accountItems)
+}
+
+
 
 app.listen(8080, ()=>{console.log('Server running on http://localhost:8080')})

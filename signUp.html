@@ -1,43 +1,13 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <title>Sign Up</title>
         <script>
-            function addInputs(){
-                var signUp = document.getElementById('signUp')
-                var inputNum  = Number(document.getElementById('amount').value)
-                if(isNaN(inputNum)){
-                    document.getElementById('numError').style['display']='block'
-                }
-                else if(inputNum > 5){
-                    var p = document.createElement('p')
-                    p.innerText = 'The maximum amount of accounts we can start with is 5.'
-                    signUp.appendChild(p)
-                }
-                else{
-                    var form = document.getElementById('accounts')
-                    form.innerHTML = ''
-                    for(let i = 0; i<inputNum; i++){
-                        var label = document.createElement('label')
-                        label.innerText = 'Account Number:  '
-                        form.appendChild(label)
-                        var input = document.createElement("input")
-                        input.type = 'text'
-                        input.name = 'accounts'
-                        form.appendChild(input)
-                        form.appendChild(document.createElement('br'))
-                        form.appendChild(document.createElement('br'))
-                    }
-                    let button = document.createElement('button')
-                    button.type = 'button'
-                    button.innerText = 'Submit'
-                    button.onclick = submitForms
-                    form.appendChild(button)
-                }
-            }
-
             function checkPassword(){
-                document.getElementById('matchingError').style['display'] = 'none'
-                document.getElementById('passwordError').style['display'] = 'none'
+                var errorMsgs = document.getElementsByClassName('error')
+                for(let i = 0; i<errorMsgs.length;i++){
+                    errorMsgs[i].style.display = 'none'
+                }
                 const charString = "!@#$%^&*()_+-=[]{};:'\"\\|,.<>/?~`";
                 const specialChars = charString.split('');
                 var passwords = document.getElementsByName('password')
@@ -51,51 +21,58 @@
                     return
                 }
                 else{
-                    addInputs()
+                    submitForm()
                 }
             }
 
-            function submitForms(){
+            function submitForm(){
                 var pass = document.getElementsByName('password')[0].value
                 var user = document.getElementById('username').value
-                var accs = [];
-                var accInputs = document.getElementsByName('accounts')
-                for (let i = 0;i<accInputs.length; i++){
-                    accs.push(accInputs[i].value)
-                }
-                let userData = {Username: user, Password: pass, Accounts: accs}
+                let userData = {'Username': user, 'Password': pass}
                 fetch(window.location.href, {
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
                 })
+                .then(response=>{
+                    if(response.status === 409){document.getElementById('userError').syle['display'] = 'block'}
+                    else if(response.ok){window.location.href = '/'}
+                    else{alert('Issue with registration. Please try again later.')}
+                })
             }
         </script>
         <style>
+            body {
+                margin: 0;
+                background-color: #171717;
+                color: #D3DAD9;
+                font-family: Arial, sans-serif;
+            }
+
+            header {
+                background-color: #1a1a1a;
+                padding: 15px;
+                font-weight: bold;
+                text-align: center;
+            }
            .error{
             color: red;
             display:none;
            } 
-           #amount{
-            margin: 5px;
-            width: 15px;
-           }
         </style>
     </head>
     <body>
         <form id = 'signUp'>
             Username:<br><input type = 'text' name = 'username' id = 'username'><br><br>
-            Password: <br><input type = 'password' name = 'password'>
+            Password: <br><input type = 'password' name = 'password'><br>
             <ul class = 'error' id = 'passwordError'>
                 <li>Must be at least 8 characters long.</li>
                 <li>There must be no special characters.</li>
             </ul>
             Confirm Password: <br><input type = 'password' name = 'password'><br><br>
             <p class = 'error' id = 'matchingError'>Passwords must match.</p>
-            How many accounts would you like to add?
-            <input type = 'text' name = 'amount' id = 'amount'><br>
-            <p class = 'error' id = 'numError'>Please input a whole number.</p>
             <button type = 'button' onclick = 'checkPassword()'>Enter</button>
+            <h3 class = 'error' id = 'userError'>Username already taken.</h3>
         </form>
         <form id = 'accounts'></form>
     </body>

@@ -5,15 +5,16 @@ const url = "mongodb://localhost:27017";
 const client = new MongoClient(url);
 
 // function to add a transaction
-async function addTransaction(accountId, userId, type, amount, description) {
+async function addTransaction(userId, type, amount, description) {
   try {
     await client.connect();
 
     const db = client.db("bankDB");
-    const collection = db.collection("transactions");
+    const transactions = db.collection("transactions");
+    const accounts = db.collection("accounts");
 
     // simple checks
-    if (!accountId || !userId || !type || !amount) {
+    if (!userId || !type || !amount) {
       console.log("Missing required fields");
       return;
     }
@@ -28,9 +29,19 @@ async function addTransaction(accountId, userId, type, amount, description) {
       return;
     }
 
+    // find account automatically using userId
+    const account = await accounts.findOne({
+      userId: new ObjectId(userId)
+    });
+
+    if (!account) {
+      console.log("Account not found for this user");
+      return;
+    }
+
     // create transaction object
     const transaction = {
-      accountId: new ObjectId(accountId),
+      accountId: account._id, // pulled automatically
       userId: new ObjectId(userId),
       type: type,
       amount: amount,
@@ -39,7 +50,7 @@ async function addTransaction(accountId, userId, type, amount, description) {
     };
 
     // insert into database
-    const result = await collection.insertOne(transaction);
+    const result = await transactions.insertOne(transaction);
 
     console.log("Transaction added:", result.insertedId);
   } catch (err) {

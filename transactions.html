@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transactions</title>
+
+    <style>
+        body {
+            background-color: darkblue;
+            font-family: Arial;
+        }
+
+        .container {
+            background-color: lightblue;
+            width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 2px solid blue;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .sectionTitle {
+            font-size: 22px;
+            color: blue;
+            margin-bottom: 10px;
+        }
+
+        .inputField {
+            width: 80%;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        .buttonStyle {
+            padding: 8px 12px;
+            background-color: darkblue;
+            color: white;
+            border: 1px solid black;
+            cursor: pointer;
+        }
+
+        .buttonStyle:hover {
+            background-color: lightblue;
+            color: black;
+        }
+
+        table {
+            margin-top: 15px;
+            width: 100%;
+            background-color: white;
+            border: 1px solid black;
+        }
+
+        th {
+            background-color: lightblue;
+        }
+
+        td, th {
+            padding: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+    <body>
+
+    <div class="container">
+        <div class="sectionTitle">Create Transaction</div>
+
+        <label>Account ID:</label><br>
+        <input class="inputField" type="text" id="accountId"><br>
+
+        <label>User ID:</label><br>
+        <input class="inputField" type="text" id="userId"><br>
+
+        <label>Type:</label><br>
+        <select class="inputField" id="type">
+            <option value="deposit">Deposit</option>
+            <option value="withdraw">Withdraw</option>
+            <option value="transfer">Transfer</option>
+        </select><br>
+
+        <label>Amount:</label><br>
+        <input class="inputField" type="number" id="amount"><br>
+
+        <label>Description:</label><br>
+        <input class="inputField" type="text" id="description"><br>
+
+        <button class="buttonStyle" onclick="createTransaction()">Submit</button>
+
+        <h3 id="result"></h3>
+
+        <hr>
+
+        <div class="sectionTitle">View Transactions</div>
+
+        <label>Account ID:</label><br>
+        <input class="inputField" type="text" id="viewAccountId"><br>
+
+        <button class="buttonStyle" onclick="viewTransactions()">Load</button>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="transactionsTable"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function createTransaction() {
+            var accountId = document.getElementById("accountId").value;
+            var userId = document.getElementById("userId").value;
+            var type = document.getElementById("type").value;
+            var amount = document.getElementById("amount").value;
+            var description = document.getElementById("description").value;
+
+            fetch("http://localhost:8080/transactions/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    accountId: accountId,
+                    userId: userId,
+                    type: type === "deposit" ? "deposit" : "withdraw",
+                    amount: Number(amount),
+                    description: type + " - " + description
+                })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                document.getElementById("result").innerText =
+                    "Transaction created: " + data._id;
+            })
+            .catch(function(error) {
+                document.getElementById("result").innerText =
+                    "Error: " + error;
+            });
+        }
+
+        function viewTransactions() {
+            var accountId = document.getElementById("viewAccountId").value;
+
+            fetch("http://localhost:8080/transactions/account/" + accountId)
+            .then(function(response) {
+                return response.json();
+            })
+
+            .then(function(data) {
+                var table = document.getElementById("transactionsTable");
+                table.innerHTML = "";
+                var rows = "";
+
+                for (var i = 0; i < data.length; i++) {
+                    rows += "<tr>" +
+                        "<td>" + data[i].type + "</td>" +
+                        "<td>" + data[i].amount + "</td>" +
+                        "<td>" + data[i].description + "</td>" +
+                        "<td>" + data[i].timestamp + "</td>" +
+                        "</tr>";
+                }
+                table.innerHTML = rows;
+            });
+        }
+    </script>
+    </body>
+</html>

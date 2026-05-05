@@ -128,5 +128,78 @@ app.post('/delete-account', async (req, res)=>{
     }
 })
 
+// handle transactions
+app.post('/transaction', async (req, res) => {
+    const { userId, type, amount, description } = req.body;
+
+    try {
+        if (!userId || !type || !amount) {
+            return res.status(400).json({
+                message: "Missing required fields"
+            });
+        }
+
+        // find account using userId
+        const account = await accountsCollection.findOne({
+            userId: new ObjectId(userId)
+        });
+
+        if (!account) {
+            return res.status(404).json({
+                message: "Account not found"
+            });
+        }
+
+        let newBalance = account.balance;
+
+        // map categories 
+        let mappedType = type;
+        if (type === "Food" || type === "Rent" || type === "Gas") {
+            mappedType = "withdraw";
+        }
+
+        // apply transaction
+        if (mappedType === "deposit") {
+            newBalance += amount;
+        }
+
+        if (mappedType === "withdraw") {
+            if (account.balance < amount) {
+                return res.status(400).json({
+                    message: "Insufficient funds";
+                });
+            }
+            newBalance -= amount;
+        }
+
+        // update account balance
+        await accountsCollection.updateOne(
+            { _id: account._id },
+            { $set: { balance: newBalance } }
+        );
+
+        // create transaction
+        const transaction = {
+            accountId: account._id,
+            userId: new ObjectId(userId),
+            type: mappedType,
+            amount,
+            description: description || "",
+            timestamp: new Date()
+        };
+
+        const result = await transactionsCollection.insertOne(transaction);
+
+        res.status(201).json({
+            message: "Transaction successful",
+            transactionId: result.insertedId,
+            newBalance
+        });
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // start server
 app.listen(8080, ()=>{console.log('Server running on http://localhost:8080')})

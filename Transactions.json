@@ -1,8 +1,7 @@
-[
-  {
-    "Account #": 12345678,
-    "Balance": -23.47,
-    "Type": "Food",
-    "Recipiant/Sender": "Fry's Grocery"
-  }
-]
+{
+  "accountId": "12345678",
+  "userId": "USER_ID_HERE",
+  "type": "withdraw",
+  "amount": 23.47,
+  "description": "Fry's Grocery"
+}
